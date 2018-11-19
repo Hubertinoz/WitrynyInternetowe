@@ -1,43 +1,44 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Szachy</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
-		<link rel="Stylesheet" type="text/css" href="styl.css" />
-    </head>
-	
-     <body ng-app="myApp" ng-controller="myCtrl">
+<head>
+    <title>Szachy</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+    <link rel="Stylesheet" type="text/css" href="styl.css"/>
+</head>
+
+<body ng-app="myApp" ng-controller="myCtrl">
 
 <div id="info">
-<p>Obecnie ma ruch: {{(Obecnie_gra? "Czarny":"Bialy")}}</p>
-<p>Komunikat: {{komunikat}}</p>
+    <p>Obecnie ma ruch: {{(Obecnie_gra? "Czarny":"Bialy")}}</p>
+    <p>Komunikat: {{komunikat}}</p>
 </div>
 
-        <div id="szachy">
-            <div class="litery">
-                <div ng-repeat="item in kolumny ">{{item}}</div>
-            </div>
-            <div class="wiersz" ng-repeat="(wie, wiersz) in wiersze">
-                <div>{{wiersz}}</div>
-                <div>
-                    <div ng-repeat="(kol, item) in kolumny "  ng-click="wierszkolumna(wie, kol)"></div>
-                </div>
-                <div>{{wiersz}}</div>
-            </div>
-            <div class="litery">
-                <div ng-repeat="item in kolumny ">{{item}}</div>
-            </div>
-            <div class="pionki">
-                <div ng-class="klasa_pionek(pionek, 'czarny')" ng-click="pionekklik(pionek)"  ng-repeat="pionek in pionki.czarne"></div>
-                <div ng-class="klasa_pionek(pionek, '')" ng-click="pionekklik(pionek)" ng-repeat="pionek in pionki.biale"></div>
-            </div>
-            <div class="pionki">
-            </div>
+<div id="szachy">
+    <div class="litery">
+        <div ng-repeat="item in kolumny ">{{item}}</div>
+    </div>
+    <div class="wiersz" ng-repeat="(wie, wiersz) in wiersze">
+        <div>{{wiersz}}</div>
+        <div>
+            <div ng-repeat="(kol, item) in kolumny " ng-click="wierszkolumna(wie, kol)"></div>
         </div>
-        
-        <script>
+        <div>{{wiersz}}</div>
+    </div>
+    <div class="litery">
+        <div ng-repeat="item in kolumny ">{{item}}</div>
+    </div>
+    <div class="pionki">
+        <div ng-class="klasa_pionek(pionek, 'czarny')" ng-click="pionekklik(pionek)"
+             ng-repeat="pionek in pionki.czarne"></div>
+        <div ng-class="klasa_pionek(pionek, '')" ng-click="pionekklik(pionek)" ng-repeat="pionek in pionki.biale"></div>
+    </div>
+    <div class="pionki">
+    </div>
+</div>
+
+<script>
         var app = angular.module('myApp', []);
         app.controller('myCtrl', function($scope) {
             $scope.pionki = {
@@ -55,18 +56,50 @@
 			$scope.badanyWiersz = 0;
 			$scope.badanaKolumna1 = 0;
 			$scope.badanaKolumna2 = 0;
+
+			$scope.dostepnePozycje = [];
             
             $scope.pionekklik = function(pionek)
             {
 				console.log(pionek);
+				$scope.dostepnePozycje = [];
 				$scope.aktywnypionek = pionek;    
 
 				$scope.czyWybranyPionekJestOK();
+
+                if($scope.dostepnePozycje.length == 0)
+                    $scope.aktywnypionek = null;
+
+				console.log($scope.dostepnePozycje);
 
 				if($scope.aktywnypionek != null)
 				$scope.komunikat = "Wykonaj ruch";
 				else
 				$scope.komunikat = "Wybierz pionek";
+            }
+
+
+            $scope.CzyNaPoluJestPionek = (wiersz, kolumna) =>
+            {
+            	var pionekWPolu = null;
+                    angular.forEach($scope.pionki, function(pionkiGracza, key) {
+				        angular.forEach(pionkiGracza, function(pionek, indexPionka){
+					        if(wiersz == pionek.wiersz && kolumna == pionek.kolumna)
+						        pionekWPolu = pionek;
+				        });
+				    });
+				    console.log(pionekWPolu);
+				return pionekWPolu;
+            }
+
+            $scope.sprawdzCzyJestBicie = (wiersz, kolumna) =>
+            {
+                if(wiersz >= 0 && wiersz < 8 && kolumna >= 0 && kolumna < 8)
+                {
+                    var res = $scope.CzyNaPoluJestPionek(wiersz, kolumna);
+                    return res==null;
+                }
+                return false;
             }
 
 			$scope.czyWybranyPionekJestOK = function()
@@ -79,12 +112,13 @@
 						return;
 					}
 					
-					$scope.badanyWiersz = $scope.aktywnypionek.gracz ? $scope.aktywnypionek.wiersz-1:$scope.aktywnypionek.wiersz+1;
+					$scope.badanyWiersz = $scope.aktywnypionek.gracz ? $scope.aktywnypionek.wiersz+1:$scope.aktywnypionek.wiersz-1;
+
+                    var res = null;
+					var badanyWiersz = $scope.aktywnypionek.gracz ? $scope.aktywnypionek.wiersz+2:$scope.aktywnypionek.wiersz-2;
 
 					$scope.badanaKolumna1 = $scope.aktywnypionek.kolumna-1;
 					$scope.badanaKolumna2 = $scope.aktywnypionek.kolumna+1;
-
-					
 
 					if($scope.badanyWiersz >= 0 && $scope.badanyWiersz < 8)
 					{
@@ -95,15 +129,21 @@
 							$scope.badanaKolumna2 = -1;
 						
 						var kol1Zajeta = true;
-						
 
 						if($scope.badanaKolumna1 > -1)
 						{
-							kol1Zajeta = $scope.czyPoleJestZajete(
-																$scope.badanyWiersz,
-																$scope.badanaKolumna1,
-																$scope.aktywnypionek.gracz? $scope.pionki.czarne : $scope.pionki.biale);
-																							
+							kol1Zajeta = $scope.CzyNaPoluJestPionek(
+							                            $scope.badanyWiersz,
+														$scope.badanaKolumna1); //-1
+
+							if(!kol1Zajeta)
+                                $scope.dostepnePozycje.push([$scope.badanyWiersz, $scope.badanaKolumna1]);
+                            else if (kol1Zajeta.gracz != $scope.aktywnypionek.gracz)
+                             {
+                                res = $scope.sprawdzCzyJestBicie(badanyWiersz, $scope.badanaKolumna1-1)
+                                 if(res)
+                                 $scope.dostepnePozycje.push([badanyWiersz, $scope.badanaKolumna1-1]);
+                             }
 
 						}
 						
@@ -111,36 +151,62 @@
 
 						if($scope.badanaKolumna2 > -1)
 						{
-							kol2Zajeta = $scope.czyPoleJestZajete(
-																$scope.badanyWiersz,
-																$scope.badanaKolumna2,
-																$scope.aktywnypionek.gracz ? $scope.pionki.czarne : $scope.pionki.biale);
-																							
+							kol2Zajeta = $scope.CzyNaPoluJestPionek(
+                                                        $scope.badanyWiersz,
+                                                        $scope.badanaKolumna2); //+1
 
+
+                            if(!kol2Zajeta)
+                                $scope.dostepnePozycje.push([$scope.badanyWiersz, $scope.badanaKolumna2]);
+                            else if (kol2Zajeta.gracz != $scope.aktywnypionek.gracz)
+                             {
+                                res = $scope.sprawdzCzyJestBicie(badanyWiersz, $scope.badanaKolumna2+1)
+                                if(res)
+                                 $scope.dostepnePozycje.push([badanyWiersz, $scope.badanaKolumna2+1]);
+                             }
 						}
+
+
+						 console.log([kol1Zajeta, kol2Zajeta]);
 					}
 				}				
 			}
-            
-			$scope.czyPoleJestZajete = function(wiersz, kolumna, pionkiGracza)
-			{
-				var pionekWPolu = null;
 
-				angular.forEach(pionkiGracza, function(pionek, indexPionka){
-					if(wiersz == pionek.wiersz && kolumna == pionek.kolumna)
-						pionekWPolu = pionek;
-				});
-				return pionekWPolu != null;
+			$scope.fweryfikacji = function(pionek)
+			{
+			var res = [];
+			 var wiersz = pionek.wiersz -1;
+			    id(pionek.gracz)
+			    {
+			        wiersz = pionek.wiersz +1;
+			    }
+			    var kolumna = pionek.kolumna -1;
+			    var kolumna = pionek.kolumna +1;
 			}
+
 
             $scope.wierszkolumna = function(wiersz, kolumna)
             {
-                if($scope.aktywnypionek != null)
+                //console.log([wiersz, kolumna, wiersz % 2, kolumna% 2, (wiersz+kolumna) % 2]);
+                //console.log($scope.dostepnePozycje.indexOf([wiersz, kolumna]));
+
+                var ruchOk = false;
+
+                angular.forEach($scope.dostepnePozycje, function(item,key) {
+                     if(item[0] == wiersz & item[1] == kolumna)
+                     {
+                        console.log(parseInt((wiersz + $scope.aktywnypionek.wiersz) / 2))
+                        ruchOk = true;
+                     }
+                });
+
+                if($scope.aktywnypionek != null && ruchOk)
                 {
                     $scope.aktywnypionek.wiersz = wiersz;
                     $scope.aktywnypionek.kolumna = kolumna;
 
 					$scope.Obecnie_gra = $scope.Obecnie_gra? 0:1;
+
 					$scope.pionekklik(null);
 
 				}
@@ -150,24 +216,25 @@
             $scope.klasa_pionek = function(obj, kolor)
             {
                 var klasa = "pionek " + kolor+ " " + $scope.kolumny[obj.kolumna] + " n" + (obj.wiersz+1);
-                
                 return  klasa;
             }
-            
-  
+
             for(i=0; i<4; i++)
             {
+
                 var pionek = {
                     kolumna: (i * 2)+1,
 					gracz:0,
                     wiersz:6
                 }
+
                 $scope.pionki.biale.push(pionek);
                 var pionek = {
                     kolumna: (i * 2)+1,
 					gracz:1,
                     wiersz:0
                 }
+
                 $scope.pionki.czarne.push(pionek);
                 
                 var pionek = {
@@ -175,18 +242,23 @@
 					gracz:0,
                     wiersz:7
                 }
+
                 $scope.pionki.biale.push(pionek);
                 var pionek = {
                     kolumna: (i * 2),
 					gracz:1,
                     wiersz:1
                 }
+
                 $scope.pionki.czarne.push(pionek);
             }
-        
-            
         });
-        </script>
-        
-    </body>
+
+
+
+
+
+</script>
+
+</body>
 </html>
