@@ -11,8 +11,17 @@
 <body ng-app="myApp" ng-controller="myCtrl">
 
 <div id="info">
-    <p>Obecnie ma ruch: {{(Obecnie_gra? "Czarny":"Bialy")}}</p>
-    <p>Komunikat: {{komunikat}}</p>
+<table width="600">
+<tr>
+<td width="200">Obecnie ma ruch: {{(Obecnie_gra? "Czarny":"Bialy")}}</td><td width="200">Komunikat: {{komunikat}}</td><td width="200">Czarne: {{czarnekomunikat}}</td>
+</tr>
+<tr>
+<td width="200">Bicie: {{komunikatbicie}}</td><td width="200"></td><td width="200">Biale: {{bialekomunikat}}</td>
+</tr>
+<table>
+    <p> </p>
+    <p></p>
+	<p> <p>
 </div>
 
 <div id="szachy">
@@ -46,8 +55,11 @@
                                 biale : [],
                             }
 
-			$scope.Obecnie_gra = 0; //bialy 0 a czarny 1
+			$scope.Obecnie_gra = 0; //Bialy 0 , Czarny 1
 			$scope.komunikat = "Wybierz pionek";
+			
+						$scope.czarnekomunikat = "8";
+			$scope.bialekomunikat = "8";
 
             $scope.kolumny = ["A","B","C","D","E","F","G","H"]; //  
             $scope.wiersze = ["1","2","3","4","5","6","7","8"]; //  
@@ -101,7 +113,8 @@
                 }
                 return false;
             }
-
+			
+			// Funkcja sprawdza czy wybrany pionek jest poprawnie wybrany
 			$scope.czyWybranyPionekJestOK = function()
 			{
 				if($scope.aktywnypionek != null){
@@ -112,6 +125,7 @@
 						return;
 					}
 					
+					//Sprawdzamy czy pionek może wykonać ruch oraz czy pionka nie poprzedza nasz inny pionek
 					$scope.badanyWiersz = $scope.aktywnypionek.gracz ? $scope.aktywnypionek.wiersz+1:$scope.aktywnypionek.wiersz-1;
 
                     var res = null;
@@ -120,6 +134,7 @@
 					$scope.badanaKolumna1 = $scope.aktywnypionek.kolumna-1;
 					$scope.badanaKolumna2 = $scope.aktywnypionek.kolumna+1;
 
+					//Ekstrema
 					if($scope.badanyWiersz >= 0 && $scope.badanyWiersz < 8)
 					{
 						if(!($scope.badanaKolumna1 >=0 && $scope.badanaKolumna1 <8))
@@ -128,6 +143,7 @@
 						if(!($scope.badanaKolumna2 >=0 && $scope.badanaKolumna2 <8))
 							$scope.badanaKolumna2 = -1;
 						
+						//Sprawdzam czy kolumna 1 jest zajeta
 						var kol1Zajeta = true;
 
 						if($scope.badanaKolumna1 > -1)
@@ -147,6 +163,7 @@
 
 						}
 						
+						//Sprawdzam czy kolumna 2 jest zajeta
 						var kol2Zajeta = true;
 
 						if($scope.badanaKolumna2 > -1)
@@ -171,7 +188,8 @@
 					}
 				}				
 			}
-
+			
+			//Czy mamy ruch
 			$scope.fweryfikacji = function(pionek)
 			{
 			var res = [];
@@ -191,6 +209,8 @@
                 //console.log($scope.dostepnePozycje.indexOf([wiersz, kolumna]));
 
                 var ruchOk = false;
+				var poleDoZbicia=[];
+                var zbij = false
 
                 angular.forEach($scope.dostepnePozycje, function(item,key) {
                      if(item[0] == wiersz & item[1] == kolumna)
@@ -202,17 +222,42 @@
 
                 if($scope.aktywnypionek != null && ruchOk)
                 {
+                    if(parseInt((wiersz + $scope.aktywnypionek.wiersz)/2) == (wiersz + $scope.aktywnypionek.wiersz)/2 && parseInt((kolumna + $scope.aktywnypionek.kolumna)/2)==(kolumna+$scope.aktywnypionek.kolumna)/2){
+                        poleDoZbicia[0] = parseInt((wiersz+$scope.aktywnypionek.wiersz)/2);
+                        poleDoZbicia[1] = parseInt((kolumna+$scope.aktywnypionek.kolumna)/2);
+                        zbij = true;
+                    }
                     $scope.aktywnypionek.wiersz = wiersz;
                     $scope.aktywnypionek.kolumna = kolumna;
-
-					$scope.Obecnie_gra = $scope.Obecnie_gra? 0:1;
-
-					$scope.pionekklik(null);
-
+                    $scope.Obecnie_gra = $scope.Obecnie_gra?0:1;
+                    $scope.pionekklik(null);
+					
+					//Bicie
+                    if(zbij){
+                        angular.forEach($scope.pionki, function(pionkiGracza,key){
+                            angular.forEach(pionkiGracza, function(pionek, indexPionka){
+                                if(poleDoZbicia[0] == pionek.wiersz && poleDoZbicia[1] == pionek.kolumna){
+									if($scope.Obecnie_gra == 1)
+									{
+										$scope.komunikatbicie = "Bialy zbija czarnego";
+										$scope.czarnekomunikat = pionkiGracza.length-1;
+									}
+									else
+									{
+										$scope.komunikatbicie = "Czarny zbija bialego";
+										$scope.bialekomunikat = pionkiGracza.length-1;
+									}
+                                    //console.log("POLE " + pionkiGracza.indexOf(pionek));
+                                    pionkiGracza.splice(pionkiGracza.indexOf(pionek), 1);
+                                    //console.log("Pionki "+pionkiGracza);
+                                }
+                            });
+                        });
+                    }
 				}
             }
             
-            //pionek czarny a n3
+            //Pionek czarny na n3
             $scope.klasa_pionek = function(obj, kolor)
             {
                 var klasa = "pionek " + kolor+ " " + $scope.kolumny[obj.kolumna] + " n" + (obj.wiersz+1);
