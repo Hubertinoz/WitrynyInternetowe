@@ -19,9 +19,7 @@
 <td width="200">Bicie: {{komunikatbicie}}</td><td width="200"></td><td width="200">Biale: {{bialekomunikat}}</td>
 </tr>
 <table>
-    <p> </p>
-    <p></p>
-	<p> <p>
+
 </div>
 
 <div id="szachy">
@@ -219,19 +217,20 @@
                         ruchOk = true;
                      }
                 });
+				
+				
 
                 if($scope.aktywnypionek != null && ruchOk)
                 {
-                    if(parseInt((wiersz + $scope.aktywnypionek.wiersz)/2) == (wiersz + $scope.aktywnypionek.wiersz)/2 && parseInt((kolumna + $scope.aktywnypionek.kolumna)/2)==(kolumna+$scope.aktywnypionek.kolumna)/2){
-                        poleDoZbicia[0] = parseInt((wiersz+$scope.aktywnypionek.wiersz)/2);
-                        poleDoZbicia[1] = parseInt((kolumna+$scope.aktywnypionek.kolumna)/2);
+                    if(parseInt((wiersz + $scope.aktywnypionek.wiersz)/2) == (wiersz + $scope.aktywnypionek.wiersz)/2 && parseInt((kolumna + $scope.aktywnypionek.kolumna)/2)==(kolumna+$scope.aktywnypionek.kolumna)/2)
+					{
+                        poleDoZbicia[0] = parseInt((wiersz + $scope.aktywnypionek.wiersz)/2);
+                        poleDoZbicia[1] = parseInt((kolumna + $scope.aktywnypionek.kolumna)/2);
                         zbij = true;
                     }
                     $scope.aktywnypionek.wiersz = wiersz;
                     $scope.aktywnypionek.kolumna = kolumna;
-                    $scope.Obecnie_gra = $scope.Obecnie_gra?0:1;
-                    $scope.pionekklik(null);
-					
+
 					//Bicie
                     if(zbij){
                         angular.forEach($scope.pionki, function(pionkiGracza,key){
@@ -247,15 +246,53 @@
 										$scope.komunikatbicie = "Czarny zbija bialego";
 										$scope.bialekomunikat = pionkiGracza.length-1;
 									}
-                                    //console.log("POLE " + pionkiGracza.indexOf(pionek));
                                     pionkiGracza.splice(pionkiGracza.indexOf(pionek), 1);
+									//console.log("POLE " + pionkiGracza.indexOf(pionek));
                                     //console.log("Pionki "+pionkiGracza);
                                 }
                             });
                         });
                     }
+					
+					if($scope.SprawdzCzyPionekMaKolejneBicie(wiersz, kolumna))
+					{
+						
+					}else
+					{
+					$scope.Obecnie_gra = $scope.Obecnie_gra?0:1;
+                    $scope.pionekklik(null);
+					}
+					
 				}
             }
+			extr = (x) => x>=0 && x<8;
+			
+			weryfikujPoleDoBicia = (wiersz, kolumna, wierszP, kolumnaP)=>
+			{
+				return extr(wiersz + wierszP) && extr(wiersz + wierszP + wierszP) && extr(kolumna + kolumnaP) && extr(kolumna + kolumnaP + kolumnaP)
+				&& $scope.CzyNaPoluJestPionek(wiersz + wierszP + wierszP, kolumna+ kolumnaP + kolumnaP) == null
+				&& ($scope.CzyNaPoluJestPionek(wiersz + wierszP, kolumna+ kolumnaP) != null
+				&& $scope.CzyNaPoluJestPionek(wiersz + wierszP, kolumna+ kolumnaP).gracz != $scope.aktywnypionek.gracz)
+			}
+			
+			
+			
+			$scope.SprawdzCzyPionekMaKolejneBicie = (wiersz, kolumna) =>
+			{
+				$scope.dostepnePozycje = [];
+				
+				var pole1 = weryfikujPoleDoBicia(wiersz, kolumna, 1, 1);
+				var pole2 = weryfikujPoleDoBicia(wiersz, kolumna, -1, 1);
+				var pole3 = weryfikujPoleDoBicia(wiersz, kolumna, 1, -1);
+				var pole4 = weryfikujPoleDoBicia(wiersz, kolumna, -1, -1);
+				
+				if(pole1) $scope.dostepnePozycje.push([wiersz+2, kolumna+2])
+					if(pole2) $scope.dostepnePozycje.push([wiersz-2, kolumna+2])
+						if(pole3) $scope.dostepnePozycje.push([wiersz+2, kolumna-2])
+							if(pole4) $scope.dostepnePozycje.push([wiersz-2, kolumna-2])
+								
+				return (pole1 || pole2 || pole3 || pole4);
+			}
             
             //Pionek czarny na n3
             $scope.klasa_pionek = function(obj, kolor)
