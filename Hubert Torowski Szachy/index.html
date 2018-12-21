@@ -9,14 +9,18 @@
 </head>
 
 <body ng-app="myApp" ng-controller="myCtrl">
-
+<center>
 <div id="info">
+<p>{{nazwa}}</p>
 <table width="600">
 <tr>
 <td width="200">Obecnie ma ruch: {{(Obecnie_gra? "Czarny":"Bialy")}}</td><td width="200">Komunikat: {{komunikat}}</td><td width="200">Czarne: {{czarnekomunikat}}</td>
 </tr>
 <tr>
 <td width="200">Bicie: {{komunikatbicie}}</td><td width="200"></td><td width="200">Biale: {{bialekomunikat}}</td>
+</tr>
+<tr>
+<td width="200"><label> Polacz </label> <input type="checkbox" ng-model="polacz" ng-change="polaczenie()"></td><td width="200"><input ng-model="nazwa" placeholder="Nazwa Pokoju"></td><td width="200">Biale: {{bialekomunikat}}</td>
 </tr>
 <table>
 
@@ -44,10 +48,12 @@
     <div class="pionki">
     </div>
 </div>
-
+</center>
 <script>
+
+
         var app = angular.module('myApp', []);
-        app.controller('myCtrl', function($scope) {
+        app.controller('myCtrl', function($scope, $http, $interval) {
             $scope.pionki = {
                                 czarne : [],
                                 biale : [],
@@ -58,7 +64,10 @@
 			
 						$scope.czarnekomunikat = "8";
 			$scope.bialekomunikat = "8";
-
+			
+			$scope.nazwa = "";
+			$scope.polacz= false;
+			
             $scope.kolumny = ["A","B","C","D","E","F","G","H"]; //  
             $scope.wiersze = ["1","2","3","4","5","6","7","8"]; //  
             $scope.aktywnypionek = null;
@@ -69,19 +78,38 @@
 
 			$scope.dostepnePozycje = [];
             
+			var host = "http://wsi.ovh/pokoj";
+			  $http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
+			$scope.polaczenie = () =>
+			{
+				$http.get(host+"&nazwa="+$scope.nazwa).then((r)=>{
+				
+				if(r.data.nazwa == $scope.nazwa && r.data.dane != undefined)
+				{
+					var obj = {
+					nazwa: $scope.nazwa,
+					dane: {pionki: $scope.pionki}
+					}
+				$http.post({url:host, method:"POST", data:"dane"+ JSON.stringify(obj)}).then((e)=>{},(e)=>{});
+				}
+				
+				console.log(r);
+				}, 
+				(e)=>{console.log(e);});
+			}
             $scope.pionekklik = function(pionek)
             {
 				console.log(pionek);
 				$scope.dostepnePozycje = [];
 				$scope.aktywnypionek = pionek;    
-
+				
 				$scope.czyWybranyPionekJestOK();
 
                 if($scope.dostepnePozycje.length == 0)
                     $scope.aktywnypionek = null;
 
 				console.log($scope.dostepnePozycje);
-
+				
 				if($scope.aktywnypionek != null)
 				$scope.komunikat = "Wykonaj ruch";
 				else
@@ -180,9 +208,6 @@
                                  $scope.dostepnePozycje.push([badanyWiersz, $scope.badanaKolumna2+1]);
                              }
 						}
-
-
-						 console.log([kol1Zajeta, kol2Zajeta]);
 					}
 				}				
 			}
@@ -230,6 +255,10 @@
                     }
                     $scope.aktywnypionek.wiersz = wiersz;
                     $scope.aktywnypionek.kolumna = kolumna;
+					
+										//if(pionkiGracza.length == 0)
+					 //window.location.href = 'koniec.html';
+					var czyByloBicie = false;
 
 					//Bicie
                     if(zbij){
@@ -238,15 +267,16 @@
                                 if(poleDoZbicia[0] == pionek.wiersz && poleDoZbicia[1] == pionek.kolumna){
 									if($scope.Obecnie_gra == 1)
 									{
-										$scope.komunikatbicie = "Bialy zbija czarnego";
-										$scope.czarnekomunikat = pionkiGracza.length-1;
-									}
-									else
-									{
 										$scope.komunikatbicie = "Czarny zbija bialego";
 										$scope.bialekomunikat = pionkiGracza.length-1;
 									}
+									else
+									{
+										$scope.komunikatbicie = "Bialy zbija czarnego";
+										$scope.czarnekomunikat = pionkiGracza.length-1;
+									}
                                     pionkiGracza.splice(pionkiGracza.indexOf(pionek), 1);
+									czyByloBicie = true;
 									//console.log("POLE " + pionkiGracza.indexOf(pionek));
                                     //console.log("Pionki "+pionkiGracza);
                                 }
@@ -254,7 +284,7 @@
                         });
                     }
 					
-					if($scope.SprawdzCzyPionekMaKolejneBicie(wiersz, kolumna))
+					if(czyByloBicie && $scope.SprawdzCzyPionekMaKolejneBicie(wiersz, kolumna))
 					{
 						
 					}else
@@ -296,6 +326,12 @@
             
             //Pionek czarny na n3
             $scope.klasa_pionek = function(obj, kolor)
+            {
+                var klasa = "pionek " + kolor+ " " + $scope.kolumny[obj.kolumna] + " n" + (obj.wiersz+1);
+                return  klasa;
+            }
+			
+			$scope.klasa_krolowa = function(obj, kolor)
             {
                 var klasa = "pionek " + kolor+ " " + $scope.kolumny[obj.kolumna] + " n" + (obj.wiersz+1);
                 return  klasa;
